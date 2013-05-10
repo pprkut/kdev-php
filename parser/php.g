@@ -810,7 +810,7 @@ LBRACKET dimOffset=dimOffset RBRACKET | LBRACE expr=expr RBRACE
 
      -- first/first conflict resolved by LA(2)
      --(expr allows STRING_VARNAME too - but without [expr])
-    DOLLAR_OPEN_CURLY_BRACES ( ?[: LA(2).kind == Token_LBRACKET:] STRING_VARNAME LBRACKET expr=expr RBRACKET RBRACE
+    DOLLAR_OPEN_CURLY_BRACES ( ?[: LA(2).kind == Token_LBRACKET:] STRING_VARNAME arrayIndexSpecifier RBRACE
       | expr=expr RBRACE )
   | variable=variableIdentifier (OBJECT_OPERATOR propertyIdentifier=identifier | LBRACKET offset=encapsVarOffset RBRACKET | 0)
   | CURLY_OPEN expr=expr RBRACE
