@@ -599,15 +599,18 @@ expression=booleanOrExpression
 
     (OBJECT_OPERATOR|PAAMAYIM_NEKUDOTAYIM)
     ( ?[: LA(1).kind == Token_DOLLAR:] LBRACE variable=variable RBRACE | objectProperty=objectProperty )
-    (isFunctionCall=LPAREN parameterList=functionCallParameterList RPAREN | 0)
+    (isFunctionCall=LPAREN parameterList=functionCallParameterList RPAREN arrayIndexSpecifier* | 0)
 -> variableProperty ;;
 
    --Conflict
    --   foo::$bar[0] (=baseVariable-staticMember)
    --vs.foo::$bar[0](); (=static function call)
-   try/rollback (functionCall=functionCall)
+   try/rollback (functionCall=functionCall arrayIndexSpecifier*)
    catch (baseVariable=baseVariable)
 -> baseVariableWithFunctionCalls ;;
+
+   LBRACKET expr=expr RBRACKET
+-> arrayIndexSpecifier ;;
 
     stringFunctionNameOrClass=namespacedIdentifier (
         LPAREN stringParameterList=functionCallParameterList RPAREN

@@ -414,6 +414,22 @@ void TestExpressionParser::shortArray()
     QCOMPARE(res.type().cast<IntegralType>()->dataType(), static_cast<uint>(IntegralType::TypeMixed));
 }
 
+void TestExpressionParser::arrayFunctionDereferencing()
+{
+    // see bug https://bugs.kde.org/show_bug.cgi?id=237110
+
+    QByteArray method("<? $a = explode(' ', 'Hello World')[0];");
+
+    TopDUContext* top = parse(method, DumpNone);
+    DUChainReleaser releaseTop(top);
+    DUChainWriteLocker lock;
+
+    QEXPECT_FAIL("", "we'd need advanced array support to know that [0] returns a string...", Continue);
+    QCOMPARE(top->localDeclarations().first()->abstractType().cast<IntegralType>()->dataType(), static_cast<uint>(IntegralType::TypeString));
+    // fallback
+    QCOMPARE(top->localDeclarations().first()->abstractType().cast<IntegralType>()->dataType(), static_cast<uint>(IntegralType::TypeMixed));
+}
+
 }
 
 #include "expressionparser.moc"
