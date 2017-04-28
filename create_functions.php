@@ -237,6 +237,9 @@ foreach ($classes as $class => $i) {
         if (isset($i['desc'])) {
             $out .= prepareComment($i['desc'], array());
         }
+        if (!empty($i['namespace'])) {
+            $out .= 'namespace ' . $i['namespace'] . " {\n";
+        }
         $class = $i['prettyName'];
         $out .= ($i['isInterface'] ? 'interface' : 'class') . " " . $class;
         if (isset($i['extends'])) {
@@ -322,6 +325,7 @@ foreach ($classes as $class => $i) {
     }
 
     if ($class != 'global') $out .= "}\n";
+    if (!empty($i['namespace'])) $out .= "}\n";
 }
 foreach ($constants as $c=>$ctype) {
     if (strpos($c, '::')===false) {
@@ -376,7 +380,15 @@ global $existingFunctions, $constants, $constants_comments, $variables, $classes
         $string = preg_replace('#'.preg_quote('<section xml:id="'.$i.'">').'.*?</section>#s', '', $string);
     }
     echo "reading documentation from {$file->getPathname()}\n";
+
+    libxml_use_internal_errors(TRUE);
     $xml = simplexml_load_string($string,  "SimpleXMLElement",  LIBXML_NOCDATA);
+
+    if ($xml === false) {
+      echo "  parsing XMl failed!\n";
+      return false;
+    }
+
 
     if ( $file->getFilename() == 'versions.xml' ) {
         foreach ( $xml->xpath('/versions/function') as $f ) {
@@ -565,18 +577,26 @@ global $existingFunctions, $constants, $constants_comments, $variables, $classes
  */
 function newClassEntry($name) {
     global $classes, $isInterface;
-    $lower = strtolower($name);
+    if (strpos($name, '\\') !== false) {
+      $class = substr($name, strrpos($name, '\\') + 1);
+      $namespace = substr($name, 0, strpos($name, '\\'));
+    } else {
+      $class = $name;
+      $namespace = null;
+    }
+    $lower = strtolower($class);
     if (!isset($classes[$lower])) {
         $classes[$lower] = array(
             'functions' => array(),
             'properties' => array(),
-            'prettyName' => $name,
+            'namespace' => $namespace,
+            'prettyName' => $class,
             'desc' => '',
             'isInterface' => $isInterface,
         );
     } else {
-        if ( $lower != $name ) {
-            $classes[$lower]['prettyName'] = $name;
+        if ( $lower != $class ) {
+            $classes[$lower]['prettyName'] = $class;
         }
         if ( $isInterface ) {
             $classes[$lower]['isInterface'] = true;
